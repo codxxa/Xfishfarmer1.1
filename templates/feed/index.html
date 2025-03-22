@@ -1,0 +1,176 @@
+{% extends "layout.html" %}
+
+{% block title %}Feed Management{% endblock %}
+
+{% block page_title %}Feed Management{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <p class="lead">Track and manage fish feeding activities</p>
+            <a href="{{ url_for('create_feed') }}" class="btn btn-primary">
+                <i class="fas fa-plus-circle me-2"></i>Record Feeding
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-body">
+                {% if feeds %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Pond</th>
+                                <th>Feed Type</th>
+                                <th>Amount (kg)</th>
+                                <th>Feeding Date</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for feed in feeds %}
+                            <tr>
+                                <td>{{ feed.pond.name }}</td>
+                                <td>{{ feed.feed_type }}</td>
+                                <td>{{ "%.2f"|format(feed.amount) }}</td>
+                                <td>{{ feed.feeding_date.strftime('%Y-%m-%d %H:%M') }}</td>
+                                <td>{{ feed.notes or "N/A" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-drumstick-bite fa-4x mb-3 text-muted"></i>
+                    <h3>No Feeding Records Found</h3>
+                    <p class="text-muted">Start tracking your feed consumption</p>
+                    <a href="{{ url_for('create_feed') }}" class="btn btn-primary mt-3">
+                        <i class="fas fa-plus-circle me-2"></i>Record Feeding
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if feeds %}
+<!-- Feed Statistics -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold">Feed Statistics</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="chart-container">
+                            <canvas id="feedByPondChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="chart-container">
+                            <canvas id="feedTypeChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if feeds %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // This is a placeholder for chart data - in production this would come from the Flask route
+    const feedByPondData = {
+        labels: ['Pond A', 'Pond B', 'Pond C', 'Pond D'],
+        datasets: [{
+            label: 'Feed Amount (kg)',
+            data: [125, 75, 90, 60],
+            backgroundColor: 'rgba(54, 162, 235, 0.7)',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 1
+        }]
+    };
+    
+    const feedTypeData = {
+        labels: ['Pellets', 'Flakes', 'Live Feed', 'Other'],
+        datasets: [{
+            data: [65, 15, 12, 8],
+            backgroundColor: [
+                'rgba(255, 99, 132, 0.7)',
+                'rgba(54, 162, 235, 0.7)',
+                'rgba(255, 206, 86, 0.7)',
+                'rgba(75, 192, 192, 0.7)'
+            ],
+            borderColor: [
+                'rgba(255, 99, 132, 1)',
+                'rgba(54, 162, 235, 1)',
+                'rgba(255, 206, 86, 1)',
+                'rgba(75, 192, 192, 1)'
+            ],
+            borderWidth: 1
+        }]
+    };
+    
+    // Feed by Pond Chart
+    const feedByPondCtx = document.getElementById('feedByPondChart');
+    if (feedByPondCtx) {
+        new Chart(feedByPondCtx, {
+            type: 'bar',
+            data: feedByPondData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Feed Consumption by Pond'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Amount (kg)'
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    // Feed Type Chart
+    const feedTypeCtx = document.getElementById('feedTypeChart');
+    if (feedTypeCtx) {
+        new Chart(feedTypeCtx, {
+            type: 'pie',
+            data: feedTypeData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Feed Types Distribution'
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endif %}
+{% endblock %}

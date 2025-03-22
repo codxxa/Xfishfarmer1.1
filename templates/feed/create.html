@@ -1,0 +1,102 @@
+{% extends "layout.html" %}
+
+{% block title %}Record Feeding{% endblock %}
+
+{% block page_title %}Record Feeding{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="card shadow">
+            <div class="card-body">
+                <form method="POST" action="" class="needs-validation" novalidate>
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        <label for="pond_id" class="form-label">Pond</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-water"></i></span>
+                            {{ form.pond_id(class="form-select") }}
+                        </div>
+                        {% if form.pond_id.errors %}
+                            <div class="text-danger">
+                                {% for error in form.pond_id.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="feed_stock_id" class="form-label">Feed Type</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-drumstick-bite"></i></span>
+                            {{ form.feed_stock_id(class="form-select") }}
+                        </div>
+                        {% if form.feed_stock_id.errors %}
+                            <div class="text-danger">
+                                {% for error in form.feed_stock_id.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="amount" class="form-label">Amount</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-weight"></i></span>
+                            {{ form.amount(class="form-control", placeholder="Feed amount") }}
+                            {{ form.unit(class="form-select", style="max-width: 150px;") }}
+                        </div>
+                        {% if form.amount.errors %}
+                            <div class="text-danger">
+                                {% for error in form.amount.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="feeding_date" class="form-label">Feeding Date & Time</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+                            {{ form.feeding_date(class="form-control", type="date") }}
+                        </div>
+                        {% if form.feeding_date.errors %}
+                            <div class="text-danger">
+                                {% for error in form.feeding_date.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="notes" class="form-label">Notes (Optional)</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-sticky-note"></i></span>
+                            {{ form.notes(class="form-control", rows="3", placeholder="Additional notes about this feeding") }}
+                        </div>
+                        {% if form.notes.errors %}
+                            <div class="text-danger">
+                                {% for error in form.notes.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('feed') }}" class="btn btn-secondary me-md-2">
+                            <i class="fas fa-times-circle me-2"></i>Cancel
+                        </a>
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

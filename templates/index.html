@@ -1,0 +1,89 @@
+{% extends "layout.html" %}
+
+{% block title %}Welcome{% endblock %}
+
+{% block page_title %}Welcome to XFishFarmer{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6">
+        <div class="card shadow mb-4">
+            <div class="card-body">
+                <h2 class="card-title mb-4">Fish Farm Management System</h2>
+                <p class="lead">A comprehensive solution for managing your fish farm operations.</p>
+                <p>XFishFarmer helps you track and manage all aspects of your fish farming business:</p>
+                <ul class="list-group list-group-flush mb-4">
+                    <li class="list-group-item bg-transparent"><i class="fas fa-water text-primary me-2"></i> Pond Management</li>
+                    <li class="list-group-item bg-transparent"><i class="fas fa-drumstick-bite text-primary me-2"></i> Feed Tracking</li>
+                    <li class="list-group-item bg-transparent"><i class="fas fa-tasks text-primary me-2"></i> Task Management</li>
+                    <li class="list-group-item bg-transparent"><i class="fas fa-skull text-primary me-2"></i> Mortality Tracking</li>
+                    <li class="list-group-item bg-transparent"><i class="fas fa-boxes text-primary me-2"></i> Stock Management</li>
+                    <li class="list-group-item bg-transparent"><i class="fas fa-dollar-sign text-primary me-2"></i> Financial Management</li>
+                    <li class="list-group-item bg-transparent"><i class="fas fa-file-pdf text-primary me-2"></i> PDF Report Generation</li>
+                </ul>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-tachometer-alt me-2"></i>Go to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card shadow mb-4">
+            <div class="card-body">
+                <h3 class="card-title mb-3">Why XFishFarmer?</h3>
+                <div class="d-flex mb-3">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-chart-line fa-2x text-primary"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h5>Data-Driven Decisions</h5>
+                        <p>Track performance metrics and generate comprehensive reports.</p>
+                    </div>
+                </div>
+                <div class="d-flex mb-3">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-money-bill-wave fa-2x text-primary"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h5>Financial Tracking</h5>
+                        <p>Manage expenses, sales, and generate professional invoices.</p>
+                    </div>
+                </div>
+                <div class="d-flex mb-3">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-clipboard-check fa-2x text-primary"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h5>Task Management</h5>
+                        <p>Never miss critical farm maintenance tasks with scheduled reminders.</p>
+                    </div>
+                </div>
+                <div class="d-flex">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-file-pdf fa-2x text-primary"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h5>Professional Reports</h5>
+                        <p>Generate PDF reports with your company branding for stakeholders.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card shadow">
+            <div class="card-body">
+                <h3 class="card-title mb-3">Get Started</h3>
+                <p>Begin by setting up your farm profile and adding your ponds:</p>
+                <ol class="mb-3">
+                    <li>Add your company details in <a href="{{ url_for('company_settings') }}">Settings</a></li>
+                    <li>Add your ponds in the <a href="{{ url_for('ponds') }}">Ponds</a> section</li>
+                    <li>Start tracking feeds, tasks, and more!</li>
+                </ol>
+                <a href="{{ url_for('ponds') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-water me-2"></i>Manage Ponds
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

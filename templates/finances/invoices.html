@@ -1,0 +1,399 @@
+{% extends "layout.html" %}
+
+{% block title %}Invoices{% endblock %}
+
+{% block page_title %}Invoice Management{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-lg-8">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold">Invoices</h6>
+            </div>
+            <div class="card-body">
+                {% if invoices %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Invoice #</th>
+                                <th>Customer</th>
+                                <th>Amount</th>
+                                <th>Tax</th>
+                                <th>Total</th>
+                                <th>Issue Date</th>
+                                <th>Due Date</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for invoice in invoices %}
+                            <tr>
+                                <td>{{ invoice.invoice_number }}</td>
+                                <td>{{ invoice.customer.name }}</td>
+                                <td>${{ "%.2f"|format(invoice.amount) }}</td>
+                                <td>${{ "%.2f"|format(invoice.tax_amount) }}</td>
+                                <td>${{ "%.2f"|format(invoice.total_amount) }}</td>
+                                <td>{{ invoice.issue_date.strftime('%Y-%m-%d') }}</td>
+                                <td>{{ invoice.due_date.strftime('%Y-%m-%d') }}</td>
+                                <td>
+                                    {% if invoice.paid %}
+                                        <span class="badge bg-success">Paid</span>
+                                    {% elif invoice.due_date < now() %}
+                                        <span class="badge bg-danger">Overdue</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">Pending</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group">
+                                        <a href="{{ url_for('invoice_pdf', invoice_id=invoice.id) }}" class="btn btn-sm btn-info" target="_blank">
+                                            <i class="fas fa-file-pdf"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-file-invoice-dollar fa-3x mb-3 text-muted"></i>
+                    <h5>No Invoices Found</h5>
+                    <p class="text-muted">Generate your first invoice</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold">Generate Invoice</h6>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="" class="needs-validation" novalidate>
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        <label for="invoice_number" class="form-label">Invoice Number</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-hashtag"></i></span>
+                            {{ form.invoice_number(class="form-control", placeholder="INV-00001") }}
+                        </div>
+                        {% if form.invoice_number.errors %}
+                            <div class="text-danger">
+                                {% for error in form.invoice_number.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="customer_id" class="form-label">Customer</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-user"></i></span>
+                            {{ form.customer_id(class="form-select") }}
+                        </div>
+                        {% if form.customer_id.errors %}
+                            <div class="text-danger">
+                                {% for error in form.customer_id.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="mt-1">
+                            <a href="{{ url_for('customers') }}" class="text-decoration-none">
+                                <small><i class="fas fa-plus-circle me-1"></i>Add new customer</small>
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="amount" class="form-label">Amount</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-dollar-sign"></i></span>
+                            {{ form.amount(class="form-control", placeholder="Invoice amount") }}
+                        </div>
+                        {% if form.amount.errors %}
+                            <div class="text-danger">
+                                {% for error in form.amount.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="tax_amount" class="form-label">Tax Amount (Optional)</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-percent"></i></span>
+                            {{ form.tax_amount(class="form-control", placeholder="Tax amount") }}
+                        </div>
+                        {% if form.tax_amount.errors %}
+                            <div class="text-danger">
+                                {% for error in form.tax_amount.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Total Amount</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-calculator"></i></span>
+                            <input type="text" class="form-control" readonly value="0.00" id="invoice-total-display">
+                            <span class="input-group-text">$</span>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="issue_date" class="form-label">Issue Date</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+                                {{ form.issue_date(class="form-control", type="date") }}
+                            </div>
+                            {% if form.issue_date.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.issue_date.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="due_date" class="form-label">Due Date</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+                                {{ form.due_date(class="form-control", type="date") }}
+                            </div>
+                            {% if form.due_date.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.due_date.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            {{ form.paid(class="form-check-input") }}
+                            <label class="form-check-label" for="paid">
+                                Invoice Already Paid
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3" id="paymentDateDiv" style="display: none;">
+                        <label for="payment_date" class="form-label">Payment Date</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-calendar-check"></i></span>
+                            {{ form.payment_date(class="form-control", type="date") }}
+                        </div>
+                        {% if form.payment_date.errors %}
+                            <div class="text-danger">
+                                {% for error in form.payment_date.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Notes (Optional)</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-sticky-note"></i></span>
+                            {{ form.notes(class="form-control", rows="2", placeholder="Additional notes") }}
+                        </div>
+                        {% if form.notes.errors %}
+                            <div class="text-danger">
+                                {% for error in form.notes.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-grid">
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if invoices %}
+<!-- Invoice Statistics -->
+<div class="row mt-4">
+    <div class="col-md-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold">Invoice Status</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="invoiceStatusChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold">Monthly Invoices</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="monthlyInvoicesChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const paidCheckbox = document.getElementById('paid');
+        const paymentDateDiv = document.getElementById('paymentDateDiv');
+        
+        // Show/hide payment date based on paid checkbox
+        function togglePaymentDate() {
+            if (paidCheckbox.checked) {
+                paymentDateDiv.style.display = 'block';
+            } else {
+                paymentDateDiv.style.display = 'none';
+            }
+        }
+        
+        // Initial check
+        togglePaymentDate();
+        
+        // Add event listener
+        paidCheckbox.addEventListener('change', togglePaymentDate);
+    });
+</script>
+{% endblock %}
+
+{% block scripts %}
+{% if invoices %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // This is a placeholder for chart data - in production this would come from the Flask route
+    const invoiceStatus = {
+        labels: ['Paid', 'Pending', 'Overdue'],
+        datasets: [{
+            data: [65, 25, 10],
+            backgroundColor: [
+                'rgba(40, 167, 69, 0.7)',
+                'rgba(255, 193, 7, 0.7)',
+                'rgba(220, 53, 69, 0.7)'
+            ],
+            borderColor: [
+                'rgba(40, 167, 69, 1)',
+                'rgba(255, 193, 7, 1)',
+                'rgba(220, 53, 69, 1)'
+            ],
+            borderWidth: 1
+        }]
+    };
+    
+    const monthlyInvoices = {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+        datasets: [{
+            label: 'Invoiced Amount',
+            data: [6500, 7200, 6800, 7100, 7600, 8200, 7800, 7300, 7700, 8100, 7900, 8300],
+            backgroundColor: 'rgba(0, 123, 255, 0.7)',
+            borderColor: 'rgba(0, 123, 255, 1)',
+            borderWidth: 1,
+            yAxisID: 'y'
+        }, {
+            label: 'Number of Invoices',
+            data: [5, 7, 6, 8, 7, 9, 8, 7, 8, 9, 8, 10],
+            backgroundColor: 'rgba(23, 162, 184, 0.7)',
+            borderColor: 'rgba(23, 162, 184, 1)',
+            borderWidth: 1,
+            type: 'line',
+            yAxisID: 'y1'
+        }]
+    };
+    
+    // Invoice Status Chart
+    const statusCtx = document.getElementById('invoiceStatusChart');
+    if (statusCtx) {
+        new Chart(statusCtx, {
+            type: 'pie',
+            data: invoiceStatus,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Invoice Status Distribution'
+                    },
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    }
+    
+    // Monthly Invoices Chart
+    const monthlyCtx = document.getElementById('monthlyInvoicesChart');
+    if (monthlyCtx) {
+        new Chart(monthlyCtx, {
+            type: 'bar',
+            data: monthlyInvoices,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Monthly Invoice Summary'
+                    }
+                },
+                scales: {
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: 'Amount ($)'
+                        }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        grid: {
+                            drawOnChartArea: false
+                        },
+                        title: {
+                            display: true,
+                            text: 'Number of Invoices'
+                        }
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endif %}
+{% endblock %}

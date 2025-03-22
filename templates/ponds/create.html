@@ -1,0 +1,120 @@
+{% extends "layout.html" %}
+
+{% block title %}Create Pond{% endblock %}
+
+{% block page_title %}Create New Pond{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="card shadow">
+            <div class="card-body">
+                <form method="POST" action="" class="needs-validation" novalidate>
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Pond Name</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-water"></i></span>
+                            {{ form.name(class="form-control", placeholder="Enter pond name") }}
+                        </div>
+                        {% if form.name.errors %}
+                            <div class="text-danger">
+                                {% for error in form.name.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="size" class="form-label">Size (m²)</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-ruler-combined"></i></span>
+                                {{ form.size(class="form-control", placeholder="Size in square meters") }}
+                            </div>
+                            {% if form.size.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.size.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <label for="water_capacity" class="form-label">Water Capacity (liters)</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-tint"></i></span>
+                                {{ form.water_capacity(class="form-control", placeholder="Capacity in liters") }}
+                            </div>
+                            {% if form.water_capacity.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.water_capacity.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="pond_type" class="form-label">Pond Type</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-list"></i></span>
+                                {{ form.pond_type(class="form-select") }}
+                            </div>
+                            {% if form.pond_type.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.pond_type.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="location" class="form-label">Location (Optional)</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-map-marker-alt"></i></span>
+                                {{ form.location(class="form-control", placeholder="Location description") }}
+                            </div>
+                            {% if form.location.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.location.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="notes" class="form-label">Notes (Optional)</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-sticky-note"></i></span>
+                            {{ form.notes(class="form-control", rows="3", placeholder="Additional notes about this pond") }}
+                        </div>
+                        {% if form.notes.errors %}
+                            <div class="text-danger">
+                                {% for error in form.notes.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('ponds') }}" class="btn btn-secondary me-md-2">
+                            <i class="fas fa-times-circle me-2"></i>Cancel
+                        </a>
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

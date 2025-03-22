@@ -1,0 +1,164 @@
+{% extends "layout.html" %}
+
+{% block title %}Create Task{% endblock %}
+
+{% block page_title %}Create New Task{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="card shadow">
+            <div class="card-body">
+                <form method="POST" action="" class="needs-validation" novalidate>
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        <label for="pond_id" class="form-label">Pond</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-water"></i></span>
+                            {{ form.pond_id(class="form-select") }}
+                        </div>
+                        {% if form.pond_id.errors %}
+                            <div class="text-danger">
+                                {% for error in form.pond_id.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="staff_id" class="form-label">Assign To Staff</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-user"></i></span>
+                            {{ form.staff_id(class="form-select") }}
+                        </div>
+                        {% if form.staff_id.errors %}
+                            <div class="text-danger">
+                                {% for error in form.staff_id.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Task Description</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-tasks"></i></span>
+                            {{ form.description(class="form-control", placeholder="Describe the task") }}
+                        </div>
+                        {% if form.description.errors %}
+                            <div class="text-danger">
+                                {% for error in form.description.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="task_type" class="form-label">Task Type</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-tag"></i></span>
+                                {{ form.task_type(class="form-select") }}
+                            </div>
+                            {% if form.task_type.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.task_type.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="due_date" class="form-label">Due Date</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+                                {{ form.due_date(class="form-control", type="date") }}
+                            </div>
+                            {% if form.due_date.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.due_date.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            {{ form.completed(class="form-check-input") }}
+                            <label class="form-check-label" for="completed">
+                                Task Already Completed
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3" id="completedDateDiv" style="display: none;">
+                        <label for="completed_date" class="form-label">Completion Date</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-calendar-check"></i></span>
+                            {{ form.completed_date(class="form-control", type="date") }}
+                        </div>
+                        {% if form.completed_date.errors %}
+                            <div class="text-danger">
+                                {% for error in form.completed_date.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="notes" class="form-label">Notes (Optional)</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-sticky-note"></i></span>
+                            {{ form.notes(class="form-control", rows="3", placeholder="Additional notes about this task") }}
+                        </div>
+                        {% if form.notes.errors %}
+                            <div class="text-danger">
+                                {% for error in form.notes.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('tasks') }}" class="btn btn-secondary me-md-2">
+                            <i class="fas fa-times-circle me-2"></i>Cancel
+                        </a>
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const completedCheckbox = document.getElementById('completed');
+        const completedDateDiv = document.getElementById('completedDateDiv');
+        
+        // Show/hide completion date based on completed checkbox
+        function toggleCompletedDate() {
+            if (completedCheckbox.checked) {
+                completedDateDiv.style.display = 'block';
+            } else {
+                completedDateDiv.style.display = 'none';
+            }
+        }
+        
+        // Initial check
+        toggleCompletedDate();
+        
+        // Add event listener
+        completedCheckbox.addEventListener('change', toggleCompletedDate);
+    });
+</script>
+{% endblock %}

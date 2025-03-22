@@ -1,0 +1,284 @@
+{% extends "layout.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Statistics Cards -->
+    <div class="col-md-6 col-xl-3 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2 dashboard-card">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-auto">
+                        <i class="fas fa-water fa-2x text-primary"></i>
+                    </div>
+                    <div class="col">
+                        <div class="text-xs text-uppercase mb-1 stat-label">Total Ponds</div>
+                        <div class="stat-value">{{ pond_count }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-3 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2 dashboard-card">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-auto">
+                        <i class="fas fa-tasks fa-2x text-warning"></i>
+                    </div>
+                    <div class="col">
+                        <div class="text-xs text-uppercase mb-1 stat-label">Pending Tasks</div>
+                        <div class="stat-value">{{ task_count }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-3 mb-4">
+        <div class="card border-left-danger shadow h-100 py-2 dashboard-card">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-auto">
+                        <i class="fas fa-dollar-sign fa-2x text-danger"></i>
+                    </div>
+                    <div class="col">
+                        <div class="text-xs text-uppercase mb-1 stat-label">Expenses (30 Days)</div>
+                        <div class="stat-value">${{ "%.2f"|format(expense_sum) }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-3 mb-4">
+        <div class="card border-left-success shadow h-100 py-2 dashboard-card">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-auto">
+                        <i class="fas fa-receipt fa-2x text-success"></i>
+                    </div>
+                    <div class="col">
+                        <div class="text-xs text-uppercase mb-1 stat-label">Sales (30 Days)</div>
+                        <div class="stat-value">${{ "%.2f"|format(sales_sum) }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Feed Consumption Chart -->
+    <div class="col-xl-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold">Feed Consumption by Pond</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="feedByPondChart" data-chart="{{ feed_by_pond|tojson }}"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mortality Chart -->
+    <div class="col-xl-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold">Mortality by Cause</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="mortalityByCauseChart" data-chart="{{ mortality_by_cause|tojson }}"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Recent Tasks -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold">Recent Tasks</h6>
+            </div>
+            <div class="card-body">
+                <div class="activity-list">
+                    {% if recent_tasks %}
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Description</th>
+                                    <th>Pond</th>
+                                    <th>Due Date</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for task in recent_tasks %}
+                                <tr class="{% if task.completed %}task-completed{% elif task.due_date < now() %}task-overdue{% else %}task-pending{% endif %}">
+                                    <td>{{ task.description }}</td>
+                                    <td>{{ task.pond.name }}</td>
+                                    <td>{{ task.due_date.strftime('%Y-%m-%d') }}</td>
+                                    <td>
+                                        {% if task.completed %}
+                                            <span class="badge bg-success">Completed</span>
+                                        {% elif task.due_date < now() %}
+                                            <span class="badge bg-danger">Overdue</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">Pending</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <p class="text-center">No recent tasks found.</p>
+                    {% endif %}
+                </div>
+                <div class="text-center mt-3">
+                    <a href="{{ url_for('tasks') }}" class="btn btn-outline-primary btn-sm">View All Tasks</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Feeding -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold">Recent Feeding</h6>
+            </div>
+            <div class="card-body">
+                <div class="activity-list">
+                    {% if recent_feedings %}
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Pond</th>
+                                    <th>Feed Type</th>
+                                    <th>Amount (kg)</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for feed in recent_feedings %}
+                                <tr>
+                                    <td>{{ feed.pond.name }}</td>
+                                    <td>{{ feed.feed_type }}</td>
+                                    <td>{{ "%.2f"|format(feed.amount) }}</td>
+                                    <td>{{ feed.feeding_date.strftime('%Y-%m-%d') }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <p class="text-center">No recent feeding records found.</p>
+                    {% endif %}
+                </div>
+                <div class="text-center mt-3">
+                    <a href="{{ url_for('feed') }}" class="btn btn-outline-primary btn-sm">View All Feeding Records</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Mortalities -->
+<div class="row">
+    <div class="col-lg-12 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold">Recent Mortalities</h6>
+            </div>
+            <div class="card-body">
+                <div class="activity-list">
+                    {% if recent_mortalities %}
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Pond</th>
+                                    <th>Species</th>
+                                    <th>Quantity</th>
+                                    <th>Cause</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for mortality in recent_mortalities %}
+                                <tr>
+                                    <td>{{ mortality.pond.name }}</td>
+                                    <td>{{ mortality.species }}</td>
+                                    <td>{{ mortality.quantity }}</td>
+                                    <td>
+                                        <span class="badge {% if mortality.cause == 'disease' %}bg-danger
+                                                           {% elif mortality.cause == 'water_quality' %}bg-warning
+                                                           {% elif mortality.cause == 'handling' %}bg-info
+                                                           {% else %}bg-secondary{% endif %}">
+                                            {{ mortality.cause }}
+                                        </span>
+                                    </td>
+                                    <td>{{ mortality.date.strftime('%Y-%m-%d') }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <p class="text-center">No recent mortality records found.</p>
+                    {% endif %}
+                </div>
+                <div class="text-center mt-3">
+                    <a href="{{ url_for('mortality') }}" class="btn btn-outline-primary btn-sm">View All Mortality Records</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Action Buttons -->
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold">Quick Actions</h6>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <a href="{{ url_for('create_pond') }}" class="btn btn-primary d-block">
+                            <i class="fas fa-plus-circle me-2"></i>Add Pond
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{{ url_for('create_feed') }}" class="btn btn-success d-block">
+                            <i class="fas fa-plus-circle me-2"></i>Record Feeding
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{{ url_for('create_task') }}" class="btn btn-warning d-block">
+                            <i class="fas fa-plus-circle me-2"></i>Add Task
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{{ url_for('reports') }}" class="btn btn-info d-block">
+                            <i class="fas fa-file-pdf me-2"></i>Generate Report
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,312 @@
+{% extends "layout.html" %}
+
+{% block title %}Sales{% endblock %}
+
+{% block page_title %}Sales Management{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-lg-8">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold">Sales Records</h6>
+            </div>
+            <div class="card-body">
+                {% if sales %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Customer</th>
+                                <th>Species</th>
+                                <th>Quantity</th>
+                                <th>Weight (kg)</th>
+                                <th>Price/kg</th>
+                                <th>Total Amount</th>
+                                <th>Sale Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for sale in sales %}
+                            <tr>
+                                <td>{{ sale.customer.name }}</td>
+                                <td>{{ sale.species }}</td>
+                                <td>{{ sale.quantity }}</td>
+                                <td>{{ "%.2f"|format(sale.weight) }}</td>
+                                <td>${{ "%.2f"|format(sale.price_per_kg) }}</td>
+                                <td>${{ "%.2f"|format(sale.total_amount) }}</td>
+                                <td>{{ sale.sale_date.strftime('%Y-%m-%d') }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-shopping-cart fa-3x mb-3 text-muted"></i>
+                    <h5>No Sales Records Found</h5>
+                    <p class="text-muted">Record your first sale</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold">Record Sale</h6>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="" class="needs-validation" novalidate>
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        <label for="customer_id" class="form-label">Customer</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-user"></i></span>
+                            {{ form.customer_id(class="form-select") }}
+                        </div>
+                        {% if form.customer_id.errors %}
+                            <div class="text-danger">
+                                {% for error in form.customer_id.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="mt-1">
+                            <a href="{{ url_for('customers') }}" class="text-decoration-none">
+                                <small><i class="fas fa-plus-circle me-1"></i>Add new customer</small>
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="species" class="form-label">Species</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-fish"></i></span>
+                            {{ form.species(class="form-control", placeholder="Fish species") }}
+                        </div>
+                        {% if form.species.errors %}
+                            <div class="text-danger">
+                                {% for error in form.species.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="quantity" class="form-label">Quantity</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-hashtag"></i></span>
+                            {{ form.quantity(class="form-control", placeholder="Number of fish") }}
+                        </div>
+                        {% if form.quantity.errors %}
+                            <div class="text-danger">
+                                {% for error in form.quantity.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="weight" class="form-label">Weight (kg)</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-weight"></i></span>
+                                {{ form.weight(class="form-control", placeholder="Weight in kg") }}
+                            </div>
+                            {% if form.weight.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.weight.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="price_per_kg" class="form-label">Price per kg</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-dollar-sign"></i></span>
+                                {{ form.price_per_kg(class="form-control", placeholder="Price per kg") }}
+                            </div>
+                            {% if form.price_per_kg.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.price_per_kg.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Total Amount</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-calculator"></i></span>
+                            <input type="text" class="form-control" readonly value="0.00" id="total-amount-display">
+                            <span class="input-group-text">$</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="sale_date" class="form-label">Sale Date</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+                            {{ form.sale_date(class="form-control", type="date") }}
+                        </div>
+                        {% if form.sale_date.errors %}
+                            <div class="text-danger">
+                                {% for error in form.sale_date.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Notes (Optional)</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-sticky-note"></i></span>
+                            {{ form.notes(class="form-control", rows="2", placeholder="Additional notes") }}
+                        </div>
+                        {% if form.notes.errors %}
+                            <div class="text-danger">
+                                {% for error in form.notes.errors %}
+                                    <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-grid">
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if sales %}
+<!-- Sales Analysis -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold">Sales Analysis</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="chart-container">
+                            <canvas id="salesBySpeciesChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="chart-container">
+                            <canvas id="salesByMonthChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if sales %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // This is a placeholder for chart data - in production this would come from the Flask route
+    const salesBySpecies = {
+        labels: ['Tilapia', 'Catfish', 'Carp', 'Trout', 'Other'],
+        datasets: [{
+            data: [4500, 3200, 2800, 2000, 1500],
+            backgroundColor: [
+                'rgba(75, 192, 192, 0.7)',
+                'rgba(54, 162, 235, 0.7)',
+                'rgba(255, 206, 86, 0.7)',
+                'rgba(153, 102, 255, 0.7)',
+                'rgba(255, 159, 64, 0.7)'
+            ],
+            borderColor: [
+                'rgba(75, 192, 192, 1)',
+                'rgba(54, 162, 235, 1)',
+                'rgba(255, 206, 86, 1)',
+                'rgba(153, 102, 255, 1)',
+                'rgba(255, 159, 64, 1)'
+            ],
+            borderWidth: 1
+        }]
+    };
+    
+    const salesByMonth = {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+        datasets: [{
+            label: 'Monthly Sales',
+            data: [5500, 6200, 5800, 6100, 6600, 7200, 6800, 6300, 6700, 7100, 6900, 7300],
+            backgroundColor: 'rgba(75, 192, 192, 0.7)',
+            borderColor: 'rgba(75, 192, 192, 1)',
+            borderWidth: 1
+        }]
+    };
+    
+    // Sales by Species Chart
+    const speciesCtx = document.getElementById('salesBySpeciesChart');
+    if (speciesCtx) {
+        new Chart(speciesCtx, {
+            type: 'pie',
+            data: salesBySpecies,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Sales by Species'
+                    },
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    }
+    
+    // Sales by Month Chart
+    const monthCtx = document.getElementById('salesByMonthChart');
+    if (monthCtx) {
+        new Chart(monthCtx, {
+            type: 'bar',
+            data: salesByMonth,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Monthly Sales'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Amount ($)'
+                        }
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endif %}
+{% endblock %}

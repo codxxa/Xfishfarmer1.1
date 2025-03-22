@@ -1,0 +1,273 @@
+{% extends "layout.html" %}
+
+{% block title %}Stock Management{% endblock %}
+
+{% block page_title %}Stock Management{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <p class="lead">Manage your fish inventory and feed stock</p>
+            <div>
+                <a href="{{ url_for('create_stock') }}" class="btn btn-primary me-2">
+                    <i class="fas fa-plus-circle me-2"></i>Add Fish Stock
+                </a>
+                <a href="{{ url_for('create_feed_stock') }}" class="btn btn-success">
+                    <i class="fas fa-plus-circle me-2"></i>Add Feed Stock
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Fish Stock -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold">Fish Stock</h6>
+                <a href="{{ url_for('create_stock') }}" class="btn btn-sm btn-primary">
+                    <i class="fas fa-plus-circle me-1"></i>Add Stock
+                </a>
+            </div>
+            <div class="card-body">
+                {% if stocks %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Pond</th>
+                                <th>Species</th>
+                                <th>Quantity</th>
+                                <th>Size (cm)</th>
+                                <th>Source</th>
+                                <th>Stocking Date</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for stock in stocks %}
+                            <tr>
+                                <td>{{ stock.pond.name }}</td>
+                                <td>{{ stock.species }}</td>
+                                <td>{{ stock.quantity }}</td>
+                                <td>{{ "%.2f"|format(stock.size) }}</td>
+                                <td>{{ stock.source or "N/A" }}</td>
+                                <td>{{ stock.stocking_date.strftime('%Y-%m-%d') }}</td>
+                                <td>{{ stock.notes or "N/A" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-fish fa-3x mb-3 text-muted"></i>
+                    <h5>No Fish Stock Records Found</h5>
+                    <p class="text-muted">Add your first stock record</p>
+                    <a href="{{ url_for('create_stock') }}" class="btn btn-primary btn-sm mt-2">
+                        <i class="fas fa-plus-circle me-1"></i>Add Fish Stock
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Feed Stock -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold">Feed Stock</h6>
+                <a href="{{ url_for('create_feed_stock') }}" class="btn btn-sm btn-success">
+                    <i class="fas fa-plus-circle me-1"></i>Add Feed Stock
+                </a>
+            </div>
+            <div class="card-body">
+                {% if feed_stocks %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Feed Name</th>
+                                <th>Quantity (kg)</th>
+                                <th>Supplier</th>
+                                <th>Purchase Date</th>
+                                <th>Expiry Date</th>
+                                <th>Cost</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for feed_stock in feed_stocks %}
+                            <tr>
+                                <td>{{ feed_stock.name }}</td>
+                                <td>{{ "%.2f"|format(feed_stock.quantity) }}</td>
+                                <td>{{ feed_stock.supplier or "N/A" }}</td>
+                                <td>{{ feed_stock.purchase_date.strftime('%Y-%m-%d') }}</td>
+                                <td>
+                                    {% if feed_stock.expiry_date %}
+                                        {% if feed_stock.expiry_date < now() %}
+                                            <span class="text-danger">{{ feed_stock.expiry_date.strftime('%Y-%m-%d') }}</span>
+                                        {% else %}
+                                            {{ feed_stock.expiry_date.strftime('%Y-%m-%d') }}
+                                        {% endif %}
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </td>
+                                <td>${{ "%.2f"|format(feed_stock.cost) }}</td>
+                                <td>{{ feed_stock.notes or "N/A" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-drumstick-bite fa-3x mb-3 text-muted"></i>
+                    <h5>No Feed Stock Records Found</h5>
+                    <p class="text-muted">Add your first feed stock record</p>
+                    <a href="{{ url_for('create_feed_stock') }}" class="btn btn-success btn-sm mt-2">
+                        <i class="fas fa-plus-circle me-1"></i>Add Feed Stock
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if stocks or feed_stocks %}
+<!-- Stock Statistics -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold">Stock Analysis</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="chart-container">
+                            <canvas id="stockLevelsChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="chart-container">
+                            <canvas id="feedStockLevelsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if stocks or feed_stocks %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // This is a placeholder for chart data - in production this would come from the Flask route
+    const stockData = {
+        labels: ['Tilapia', 'Catfish', 'Carp', 'Trout'],
+        data: [150, 85, 65, 120]
+    };
+    
+    const feedStockData = {
+        labels: ['Protein Pellets', 'Growth Pellets', 'Fingerling Feed', 'Vitamin Mix'],
+        datasets: [{
+            label: 'Feed Quantity (kg)',
+            data: [450, 250, 120, 80],
+            backgroundColor: [
+                'rgba(75, 192, 192, 0.7)',
+                'rgba(54, 162, 235, 0.7)',
+                'rgba(255, 206, 86, 0.7)',
+                'rgba(153, 102, 255, 0.7)'
+            ],
+            borderColor: [
+                'rgba(75, 192, 192, 1)',
+                'rgba(54, 162, 235, 1)',
+                'rgba(255, 206, 86, 1)',
+                'rgba(153, 102, 255, 1)'
+            ],
+            borderWidth: 1
+        }]
+    };
+    
+    // Fish Stock Chart
+    const stockCtx = document.getElementById('stockLevelsChart');
+    if (stockCtx) {
+        new Chart(stockCtx, {
+            type: 'pie',
+            data: {
+                labels: stockData.labels,
+                datasets: [{
+                    data: stockData.data,
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.7)',
+                        'rgba(54, 162, 235, 0.7)',
+                        'rgba(255, 206, 86, 0.7)',
+                        'rgba(75, 192, 192, 0.7)'
+                    ],
+                    borderColor: [
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 206, 86, 1)',
+                        'rgba(75, 192, 192, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Fish Stock by Species'
+                    },
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    }
+    
+    // Feed Stock Chart
+    const feedStockCtx = document.getElementById('feedStockLevelsChart');
+    if (feedStockCtx) {
+        new Chart(feedStockCtx, {
+            type: 'bar',
+            data: feedStockData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Feed Stock Levels'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Quantity (kg)'
+                        }
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endif %}
+{% endblock %}
