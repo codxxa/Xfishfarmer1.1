@@ -7,7 +7,7 @@ from datetime import datetime
 import io
 import os
 from app import db
-from models import Pond, Feed, Task, Mortality, Stock, FeedStock, Expense, Customer, Sale, Invoice, Company
+from models import Pond, Feed, Task, Mortality, Stock, FeedStock, Expense, Customer, Sale, Invoice, Company, Staff
 
 def get_company_info():
     """Get company information for reports"""
@@ -193,7 +193,34 @@ def get_report_data(report_type, start_date, end_date):
             "headers": ["Pond", "Description", "Type", "Due Date", "Completed", "Completion Date"]
         }
     
-    return None
+    elif report_type == 'staff':
+        staff_members = Staff.query.filter(Staff.hire_date.between(start_date, end_date)).all()
+        table_data = []
+        for staff in staff_members:
+            table_data.append([
+                staff.name,
+                staff.position,
+                staff.phone,
+                staff.email,
+                staff.hire_date.strftime('%Y-%m-%d'),
+                staff.status
+            ])
+        
+        return {
+            "title": "Staff Report",
+            "data": table_data,
+            "headers": ["Name", "Position", "Phone", "Email", "Hire Date", "Status"]
+        }
+    
+    # Default case for invalid report types
+    return {
+        "title": "Invalid Report Type",
+        "data": [],
+        "headers": [],
+        "message": "The selected report type is not valid."
+    }
+
+    
 
 def generate_report_pdf(report_type, start_date, end_date):
     """Generate PDF report based on report type and date range"""
@@ -222,57 +249,61 @@ def generate_report_pdf(report_type, start_date, end_date):
     # Get report data
     report_data = get_report_data(report_type, start_date, end_date)
     
-    # Add report title
-    elements.append(Paragraph(report_data["title"], styles["Heading2"]))
-    elements.append(Paragraph(f"Period: {start_date.strftime('%Y-%m-%d')} to {end_date.strftime('%Y-%m-%d')}", styles["Normal"]))
-    elements.append(Spacer(1, 0.25 * inch))
-    
-    # Add report table
-    if report_data["data"]:
-        if report_type == 'pond_status':
-            # Special handling for pond status
-            data = [report_data["headers"]]
-            for pond in report_data["data"]:
-                data.append([
-                    pond.name,
-                    pond.pond_type,
-                    f"{pond.size:.2f}",
-                    f"{pond.depth:.2f}",
-                    f"{pond.water_capacity:.2f}"
-                ])
-        else:
-            # For other reports, data is already in table format
-            data = [report_data["headers"]] + report_data["data"]
-        
-        table = Table(data, repeatRows=1)
-        table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-            ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
-            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-            ('BACKGROUND', (0, 1), (-1, -1), colors.white),
-            ('GRID', (0, 0), (-1, -1), 1, colors.black),
-            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-            ('FONTSIZE', (0, 1), (-1, -1), 10),
-            ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
-            ('TOPPADDING', (0, 1), (-1, -1), 6),
-        ]))
-        elements.append(table)
-        
-        # Add total if available
-        if "total" in report_data:
-            elements.append(Spacer(1, 0.25 * inch))
-            elements.append(Paragraph(f"Total: ${report_data['total']:.2f}", styles["Heading3"]))
-            
-            if "total_paid" in report_data:
-                elements.append(Paragraph(f"Total Paid: ${report_data['total_paid']:.2f}", styles["Heading3"]))
-                elements.append(Paragraph(f"Outstanding: ${(report_data['total'] - report_data['total_paid']):.2f}", styles["Heading3"]))
+    if report_data is None:
+        # Handle the case where report_data is None
+        elements.append(Paragraph("Invalid report type or no data available.", styles["Heading2"]))
     else:
-        # No data available
-        elements.append(Paragraph("No data available for the selected period.", styles["Normal"]))
+        # Add report title
+        elements.append(Paragraph(report_data["title"], styles["Heading2"]))
+        elements.append(Paragraph(f"Period: {start_date.strftime('%Y-%m-%d')} to {end_date.strftime('%Y-%m-%d')}", styles["Normal"]))
+        elements.append(Spacer(1, 0.25 * inch))
+        
+        # Add report table if data is available
+        if report_data["data"]:
+            if report_type == 'pond_status':
+                # Special handling for pond status
+                data = [report_data["headers"]]
+                for pond in report_data["data"]:
+                    data.append([
+                        pond.name,
+                        pond.pond_type,
+                        f"{pond.size:.2f}" if pond.size is not None else "N/A",
+                        f"{pond.depth:.2f}" if pond.depth is not None else "N/A",
+                        f"{pond.water_capacity:.2f}" if pond.water_capacity is not None else "N/A"
+                    ])
+            else:
+                # For other reports, data is already in table format
+                data = [report_data["headers"]] + report_data["data"]
+            
+            table = Table(data, repeatRows=1)
+            table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+                ('FONTSIZE', (0, 1), (-1, -1), 10),
+                ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
+                ('TOPPADDING', (0, 1), (-1, -1), 6),
+            ]))
+            elements.append(table)
+            
+            # Add total if available
+            if "total" in report_data:
+                elements.append(Spacer(1, 0.25 * inch))
+                elements.append(Paragraph(f"Total: ${report_data['total']:.2f}", styles["Heading3"]))
+                
+                if "total_paid" in report_data:
+                    elements.append(Paragraph(f"Total Paid: ${report_data['total_paid']:.2f}", styles["Heading3"]))
+                    elements.append(Paragraph(f"Outstanding: ${(report_data['total'] - report_data['total_paid']):.2f}", styles["Heading3"]))
+        else:
+            # No data available
+            elements.append(Paragraph("No data available for the selected period.", styles["Normal"]))
     
     # Add footer with date and time
     elements.append(Spacer(1, 0.5 * inch))

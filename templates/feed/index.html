@@ -36,8 +36,8 @@
                             {% for feed in feeds %}
                             <tr>
                                 <td>{{ feed.pond.name }}</td>
-                                <td>{{ feed.feed_type }}</td>
-                                <td>{{ "%.2f"|format(feed.amount) }}</td>
+                                <td>{{ feed.feed_stock.name }}</td>
+                                <td>{{ "%.2f"|format(feed.amount) }} {{ feed.unit }}</td>
                                 <td>{{ feed.feeding_date.strftime('%Y-%m-%d %H:%M') }}</td>
                                 <td>{{ feed.notes or "N/A" }}</td>
                             </tr>

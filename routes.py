@@ -12,8 +12,9 @@ from pdf_generator import generate_report_pdf, generate_invoice_pdf
 
 # Helper Functions
 def allowed_file(filename):
+    allowed_extensions = app.config.get('ALLOWED_EXTENSIONS', {'png', 'jpg', 'jpeg', 'gif'})
     return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
+           filename.rsplit('.', 1)[1].lower() in allowed_extensions
 
 def save_logo(form_logo):
     if form_logo and form_logo.data and allowed_file(form_logo.data.filename):
@@ -41,7 +42,7 @@ def dashboard():
     
     # Get recent activities
     recent_tasks = Task.query.order_by(Task.due_date.desc()).limit(5).all()
-    recent_feedings = Feed.query.order_by(Feed.feeding_date.desc()).limit(5).all()
+    recent_feedings = Feed.query.order_by(Feed.feeding_date.desc()).limit(5).all() 
     recent_mortalities = Mortality.query.order_by(Mortality.date.desc()).limit(5).all()
     
     # Get data for charts
@@ -64,7 +65,7 @@ def dashboard():
                            recent_mortalities=recent_mortalities,
                            feed_by_pond=feed_by_pond,
                            mortality_by_cause=mortality_by_cause,
-                           now=lambda: date.now())
+                           now=lambda: datetime.now().date())
                            
                            
                        
@@ -184,7 +185,9 @@ def create_feed():
 @app.route('/tasks')
 def tasks():
     tasks = Task.query.order_by(Task.due_date).all()
-    return render_template('tasks/index.html', tasks=tasks)
+    #return render_template('tasks/index.html', tasks=tasks)
+    return render_template('tasks/index.html', tasks=tasks, now=lambda: datetime.now().date())
+    
 
 @app.route('/tasks/create', methods=['GET', 'POST'])
 def create_task():
@@ -288,7 +291,7 @@ def create_feed_stock():
         db.session.commit()
         flash('Feed stock added successfully!', 'success')
         return redirect(url_for('stock'))
-    return render_template('stock/create.html', form=form, title='Add Feed Stock', feed_stock=True)
+    return render_template('stock/create.html', form=form, title='Add Feed Stock', feed_stock=True, )
 
 # Financial Management Routes
 @app.route('/finances/expenses', methods=['GET', 'POST'])
@@ -391,7 +394,7 @@ def invoices():
         return redirect(url_for('invoices'))
     
     invoices = Invoice.query.order_by(Invoice.issue_date.desc()).all()
-    return render_template('finances/invoices.html', invoices=invoices, form=form)
+    return render_template('finances/invoices.html', invoices=invoices, form=form, now=lambda: datetime.now().date())
 
 @app.route('/customers', methods=['GET', 'POST'])
 def customers():
