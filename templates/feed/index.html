@@ -60,26 +60,43 @@
     </div>
 </div>
 
-{% if feeds %}
-<!-- Feed Statistics -->
+{% if monthly_feed_usage %}
+<!-- Monthly Feed Summary -->
 <div class="row mt-4">
     <div class="col-12">
         <div class="card shadow">
             <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold">Feed Statistics</h6>
+                <h6 class="m-0 font-weight-bold">Monthly Feed Summary</h6>
+                <div class="mt-2">
+                    <label for="unit-select">Select Unit:</label>
+                    <select id="unit-select" class="form-select form-select-sm w-auto">
+                        <option value="kg">Kilograms (kg)</option>
+                        <option value="g">Grams (g)</option>
+                    </select>
+                </div>
             </div>
             <div class="card-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="chart-container">
-                            <canvas id="feedByPondChart"></canvas>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="chart-container">
-                            <canvas id="feedTypeChart"></canvas>
-                        </div>
-                    </div>
+                <div class="table-responsive">
+                    <table class="table table-hover" id="feed-summary-table">
+                        <thead>
+                            <tr>
+                                <th>Pond</th>
+                                <th>Feed Type</th>
+                                <th>Total Feed Used</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for pond_name, feed_type, total_amount_kg, total_amount_g in monthly_feed_usage %}
+                            <tr>
+                                <td>{{ pond_name }}</td>
+                                <td>{{ feed_type }}</td>
+                                <td data-kg="{{ "%.2f"|format(total_amount_kg) }}" data-g="{{ "%.2f"|format(total_amount_g) }}">
+                                    {{ "%.2f"|format(total_amount_kg) }} kg
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -89,88 +106,31 @@
 {% endblock %}
 
 {% block scripts %}
-{% if feeds %}
+<!-- JavaScript for Unit Toggle -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // This is a placeholder for chart data - in production this would come from the Flask route
-    const feedByPondData = {
-        labels: ['Pond A', 'Pond B', 'Pond C', 'Pond D'],
-        datasets: [{
-            label: 'Feed Amount (kg)',
-            data: [125, 75, 90, 60],
-            backgroundColor: 'rgba(54, 162, 235, 0.7)',
-            borderColor: 'rgba(54, 162, 235, 1)',
-            borderWidth: 1
-        }]
-    };
-    
-    const feedTypeData = {
-        labels: ['Pellets', 'Flakes', 'Live Feed', 'Other'],
-        datasets: [{
-            data: [65, 15, 12, 8],
-            backgroundColor: [
-                'rgba(255, 99, 132, 0.7)',
-                'rgba(54, 162, 235, 0.7)',
-                'rgba(255, 206, 86, 0.7)',
-                'rgba(75, 192, 192, 0.7)'
-            ],
-            borderColor: [
-                'rgba(255, 99, 132, 1)',
-                'rgba(54, 162, 235, 1)',
-                'rgba(255, 206, 86, 1)',
-                'rgba(75, 192, 192, 1)'
-            ],
-            borderWidth: 1
-        }]
-    };
-    
-    // Feed by Pond Chart
-    const feedByPondCtx = document.getElementById('feedByPondChart');
-    if (feedByPondCtx) {
-        new Chart(feedByPondCtx, {
-            type: 'bar',
-            data: feedByPondData,
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    title: {
-                        display: true,
-                        text: 'Feed Consumption by Pond'
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: 'Amount (kg)'
-                        }
-                    }
+    // Unit Selector Functionality
+    const unitSelect = document.getElementById('unit-select');
+    const feedSummaryTable = document.getElementById('feed-summary-table');
+
+    if (unitSelect && feedSummaryTable) {
+        unitSelect.addEventListener('change', function() {
+            const selectedUnit = this.value;
+            const rows = feedSummaryTable.querySelectorAll('tbody tr');
+
+            rows.forEach(row => {
+                const amountCell = row.querySelector('td:nth-child(3)');
+                const amountKg = amountCell.getAttribute('data-kg');
+                const amountG = amountCell.getAttribute('data-g');
+
+                if (selectedUnit === 'kg') {
+                    amountCell.textContent = `${amountKg} kg`;
+                } else if (selectedUnit === 'g') {
+                    amountCell.textContent = `${amountG} g`;
                 }
-            }
-        });
-    }
-    
-    // Feed Type Chart
-    const feedTypeCtx = document.getElementById('feedTypeChart');
-    if (feedTypeCtx) {
-        new Chart(feedTypeCtx, {
-            type: 'pie',
-            data: feedTypeData,
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    title: {
-                        display: true,
-                        text: 'Feed Types Distribution'
-                    }
-                }
-            }
+            });
         });
     }
 });
 </script>
-{% endif %}
 {% endblock %}

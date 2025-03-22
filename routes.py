@@ -1,4 +1,7 @@
 from flask import render_template, redirect, url_for, flash, request, send_file, abort
+
+from datetime import datetime, timedelta
+from sqlalchemy import func
 from datetime import datetime, timedelta, date
 from werkzeug.utils import secure_filename
 import os
@@ -134,10 +137,37 @@ def delete_pond(pond_id):
     return redirect(url_for('ponds'))
 
 # Feed Management Routes
+from sqlalchemy import case
 @app.route('/feed')
 def feed():
+    # Get all feeds
     feeds = Feed.query.order_by(Feed.feeding_date.desc()).all()
-    return render_template('feed/index.html', feeds=feeds)
+
+    # Calculate monthly feed usage per pond and feed type
+    monthly_feed_usage = db.session.query(
+        Pond.name.label('pond_name'),  # Pond name
+        FeedStock.name.label('feed_type'),  # Feed type
+        func.sum(
+            case(
+                (Feed.unit == 'g', Feed.amount / 1000),  # Convert grams to kg
+                else_=Feed.amount
+            )
+        ).label('total_amount_kg'),  # Total amount in kg
+        func.sum(
+            case(
+                (Feed.unit == 'kg', Feed.amount * 1000),  # Convert kg to grams
+                else_=Feed.amount
+            )
+        ).label('total_amount_g')  # Total amount in grams
+    ).join(FeedStock, Feed.feed_stock_id == FeedStock.id)\
+     .join(Pond, Feed.pond_id == Pond.id)\
+     .filter(Feed.feeding_date >= datetime.now() - timedelta(days=30))\
+     .group_by(Pond.name, FeedStock.name)\
+     .order_by(Pond.name, FeedStock.name)\
+     .all()
+
+    return render_template('feed/index.html', feeds=feeds, monthly_feed_usage=monthly_feed_usage)
+
 
 @app.route('/feed/create', methods=['GET', 'POST'])
 def create_feed():
