@@ -4,22 +4,31 @@ from wtforms import StringField, FloatField, TextAreaField, SelectField, DateFie
 from wtforms.validators import DataRequired, Email, Optional, NumberRange
 from datetime import datetime, timedelta, date
 
+from wtforms import StringField, FloatField, TextAreaField, SelectField
+from wtforms.validators import DataRequired
+from models import PondStatus
+
+
 class PondForm(FlaskForm):
     name = StringField('Pond Name', validators=[DataRequired()])
-    size = FloatField('Size (m²)', validators=[DataRequired(), NumberRange(min=0.1)])
-    water_capacity = FloatField('Water Capacity (liters)', validators=[DataRequired(), NumberRange(min=1)])
+    size = FloatField('Size (m²)', validators=[DataRequired()])
+    water_capacity = FloatField('Water Capacity (liters)', validators=[DataRequired()])
+    fish_count = IntegerField('Fish Count', validators=[DataRequired(), NumberRange(min=0)])
+    fish_type = SelectField('Fish Type', choices=[
+        ('Tilapia', 'Tilapia'),
+        ('Catfish', 'Catfish'),
+        ('Other', 'Other')
+    ], validators=[DataRequired()])
     pond_type = SelectField('Pond Type', choices=[
-        ('freshwater', 'Freshwater'), 
-        ('saltwater', 'Saltwater'), 
-        ('brackish', 'Brackish'),
-        ('recirculating', 'Recirculating Aquaculture System'),
-        ('concrete', 'CONCRETE'),
-        ('liner', 'LINER'),
-        ('other', 'Other')
-    ])
-    location = StringField('Location', validators=[Optional()])
-    notes = TextAreaField('Notes', validators=[Optional()])
-    submit = SubmitField('Save Pond')
+        ('Concrete', 'Concrete'),
+        ('Liner', 'Liner'),
+        ('Earthen', 'Earthen'),
+        ('Other', 'Other')
+    ], validators=[DataRequired()])
+    status = SelectField('Status', choices=[(status.value, status.value) for status in PondStatus], default=PondStatus.ACTIVE.value)
+    location = StringField('Location (Optional)')
+    notes = TextAreaField('Notes (Optional)')
+    submit = SubmitField('Create Pond')
 
 class FeedForm(FlaskForm):
     pond_id = SelectField('Pond', coerce=int, validators=[DataRequired()])

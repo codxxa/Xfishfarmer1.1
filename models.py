@@ -1,30 +1,36 @@
 from datetime import datetime, date
 from app import db
+from enum import Enum
+from sqlalchemy import Enum as SQLAlchemyEnum
+
+
+class PondStatus(Enum):
+    ACTIVE = "ACTIVE"
+    MAINTENANCE = "MAINTENANCE"
+    INACTIVE = "INACTIVE"
+    OTHER = "OTHER"
 
 class Pond(db.Model):
+    __tablename__ = 'ponds'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
-    size = db.Column(db.Float, nullable=False)  # Size in square meters
-    water_capacity = db.Column(db.Float, nullable=False)  # Capacity in liters
-    depth = db.Column(db.Float, nullable=True)  # Depth in meters
-    pond_type = db.Column(db.String(50), nullable=False)  # e.g., freshwater, saltwater
-    location = db.Column(db.String(100), nullable=True)
-    notes = db.Column(db.Text, nullable=True)
+    size = db.Column(db.Float, nullable=False)
+    water_capacity = db.Column(db.Float, nullable=False)
+    fish_count = db.Column(db.Integer, nullable=True)  # New field
+    fish_type = db.Column(db.String(50), nullable=False)  # New field for fish type
+    pond_type = db.Column(db.String(50), nullable=False)
+    location = db.Column(db.String(200))
+    mortalities = db.relationship('Mortality', backref='pond    ', lazy=True, cascade="all, delete-orphan")
+    
+    notes = db.Column(db.Text)
+    status = db.Column(SQLAlchemyEnum(PondStatus), default=PondStatus.ACTIVE, nullable=False)
     date_created = db.Column(db.DateTime, default=datetime.utcnow)
     date_updated = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    # Relationships
-    feeds = db.relationship('Feed', backref='pond', lazy=True, cascade="all, delete-orphan")
-    tasks = db.relationship('Task', backref='pond', lazy=True, cascade="all, delete-orphan")
-    mortalities = db.relationship('Mortality', backref='pond', lazy=True, cascade="all, delete-orphan")
-    stocks = db.relationship('Stock', backref='pond', lazy=True, cascade="all, delete-orphan")
-
-    def __repr__(self):
-        return f"Pond('{self.name}', '{self.pond_type}')"
 
 class Feed(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    pond_id = db.Column(db.Integer, db.ForeignKey('pond.id'), nullable=False)
+    pond_id = db.Column(db.Integer, db.ForeignKey('ponds.id'), nullable=False)
     feed_stock_id = db.Column(db.Integer, db.ForeignKey('feed_stock.id'), nullable=False)
     amount = db.Column(db.Float, nullable=False)  # Amount in kg or g
     unit = db.Column(db.String(5), nullable=False, default='kg')  # kg or g
@@ -33,6 +39,7 @@ class Feed(db.Model):
     date_created = db.Column(db.DateTime, default=datetime.utcnow)
     date_updated = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
+    pond = db.relationship('Pond', backref='feeds', lazy=True)
     feed_stock = db.relationship('FeedStock', backref='feedings', lazy=True)
 
     def __repr__(self):
@@ -59,7 +66,7 @@ class Staff(db.Model):
 
 class Task(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    pond_id = db.Column(db.Integer, db.ForeignKey('pond.id'), nullable=False)
+    pond_id = db.Column(db.Integer, db.ForeignKey('ponds.id'), nullable=False)
     staff_id = db.Column(db.Integer, db.ForeignKey('staff.id'), nullable=False)
     description = db.Column(db.String(200), nullable=False)
     task_type = db.Column(db.String(50), nullable=False)  # e.g., water change, cleaning, medication
@@ -71,12 +78,17 @@ class Task(db.Model):
     date_created = db.Column(db.DateTime, default=datetime.utcnow)
     date_updated = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+    # Define the relationship to the Pond model
+    pond = db.relationship('Pond', backref='tasks', lazy=True)
+
     def __repr__(self):
         return f"Task('{self.description}', '{self.task_type}', {self.due_date})"
 
 class Mortality(db.Model):
+
+    
     id = db.Column(db.Integer, primary_key=True)
-    pond_id = db.Column(db.Integer, db.ForeignKey('pond.id'), nullable=False)
+    pond_id = db.Column(db.Integer, db.ForeignKey('ponds.id'), nullable=False)  # Foreign key to Pond
     quantity = db.Column(db.Integer, nullable=False)
     species = db.Column(db.String(100), nullable=False)
     cause = db.Column(db.String(100), nullable=False)
@@ -87,10 +99,10 @@ class Mortality(db.Model):
 
     def __repr__(self):
         return f"Mortality({self.quantity} {self.species}, '{self.cause}')"
-
+    
 class Stock(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    pond_id = db.Column(db.Integer, db.ForeignKey('pond.id'), nullable=False)
+    pond_id = db.Column(db.Integer, db.ForeignKey('ponds.id'), nullable=False)
     species = db.Column(db.String(100), nullable=False)
     quantity = db.Column(db.Integer, nullable=False)
     size = db.Column(db.Float, nullable=False)  # Size in cm
@@ -99,6 +111,9 @@ class Stock(db.Model):
     notes = db.Column(db.Text, nullable=True)
     date_created = db.Column(db.DateTime, default=datetime.utcnow)
     date_updated = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Define the relationship to the Pond model
+    pond = db.relationship('Pond', backref='stocks', lazy=True)
 
     def __repr__(self):
         return f"Stock({self.quantity} {self.species}, {self.size}cm)"

@@ -36,21 +36,14 @@
                         <tbody>
                             {% for mortality in mortalities %}
                             <tr>
-                                <td>{{ mortality.pond.name }}</td>
+                                <td>{{ mortality.pond.name if mortality.pond else 'No Pond' }}</td>
                                 <td>{{ mortality.species }}</td>
                                 <td>{{ mortality.quantity }}</td>
-                                <td>
-                                    <span class="badge {% if mortality.cause == 'disease' %}bg-danger
-                                                       {% elif mortality.cause == 'water_quality' %}bg-warning
-                                                       {% elif mortality.cause == 'handling' %}bg-info
-                                                       {% else %}bg-secondary{% endif %}">
-                                        {{ mortality.cause }}
-                                    </span>
-                                </td>
+                                <td>{{ mortality.cause }}</td>
                                 <td>{{ mortality.date.strftime('%Y-%m-%d') }}</td>
                                 <td>{{ mortality.notes or "N/A" }}</td>
                             </tr>
-                            {% endfor %}
+                            {% endfor %}  <!-- Correctly closed for loop -->
                         </tbody>
                     </table>
                 </div>
@@ -63,7 +56,7 @@
                         <i class="fas fa-plus-circle me-2"></i>Record Mortality
                     </a>
                 </div>
-                {% endif %}
+                {% endif %}  <!-- Correctly closed if block -->
             </div>
         </div>
     </div>
@@ -94,7 +87,7 @@
         </div>
     </div>
 </div>
-{% endif %}
+{% endif %}  <!-- Correctly closed if block -->
 {% endblock %}
 
 {% block scripts %}
@@ -186,5 +179,5 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
-{% endif %}
+{% endif %}  <!-- Correctly closed if block -->
 {% endblock %}

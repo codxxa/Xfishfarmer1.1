@@ -6,12 +6,13 @@ from datetime import datetime, timedelta, date
 from werkzeug.utils import secure_filename
 import os
 import io
-
+from sqlalchemy.orm import joinedload
 from app import app, db
 from models import Pond, Feed, Task, Mortality, Stock, FeedStock, Expense, Customer, Sale, Invoice, Company, Staff
 from forms import (PondForm, FeedForm, TaskForm, MortalityForm, StockForm, FeedStockForm, 
                   ExpenseForm, CustomerForm, SaleForm, InvoiceForm, CompanyForm, ReportForm, StaffForm)
 from pdf_generator import generate_report_pdf, generate_invoice_pdf
+from sqlalchemy import case
 
 # Helper Functions
 def allowed_file(filename):
@@ -36,6 +37,10 @@ def index():
 def dashboard():
     # Get summary counts for dashboard
     pond_count = Pond.query.count()
+    
+    # Calculate total fish count by summing fish_count from all ponds
+    total_fish_count = db.session.query(db.func.sum(Pond.fish_count)).scalar() or 0
+    
     task_count = Task.query.filter_by(completed=False).count()
     mortality_count = Mortality.query.filter(Mortality.date >= date.today() - timedelta(days=30)).count()
     expense_sum = db.session.query(db.func.sum(Expense.amount)).filter(
@@ -51,7 +56,8 @@ def dashboard():
     # Get data for charts
     feed_by_pond = [(str(row[0]), float(row[1])) for row in db.session.query(
         Pond.name, db.func.sum(Feed.amount)
-    ).join(Feed).group_by(Pond.id).order_by(db.func.sum(Feed.amount).desc()).limit(5).all()]
+    ).join(Feed, Pond.id == Feed.pond_id)  # Explicitly specify the join condition
+    .group_by(Pond.id).order_by(db.func.sum(Feed.amount).desc()).limit(5).all()]
     
     mortality_by_cause = [(str(row[0]), int(row[1])) for row in db.session.query(
         Mortality.cause, db.func.sum(Mortality.quantity)
@@ -59,6 +65,7 @@ def dashboard():
     
     return render_template('dashboard.html',
                            pond_count=pond_count,
+                           total_fish_count=total_fish_count,  # Pass the total fish count to the template
                            task_count=task_count,
                            mortality_count=mortality_count,
                            expense_sum=expense_sum,
@@ -69,9 +76,7 @@ def dashboard():
                            feed_by_pond=feed_by_pond,
                            mortality_by_cause=mortality_by_cause,
                            now=lambda: datetime.now().date())
-                           
-                           
-                       
+                                    
 # Pond Management Routes
 @app.route('/ponds')
 def ponds():
@@ -86,15 +91,19 @@ def create_pond():
             name=form.name.data,
             size=form.size.data,
             water_capacity=form.water_capacity.data,
+            fish_count=form.fish_count.data,
+            fish_type=form.fish_type.data,  # Ensure this is included
             pond_type=form.pond_type.data,
             location=form.location.data,
-            notes=form.notes.data
+            notes=form.notes.data,
+            status=form.status.data
         )
         db.session.add(pond)
         db.session.commit()
         flash('Pond created successfully!', 'success')
         return redirect(url_for('ponds'))
-    return render_template('ponds/create.html', form=form, title='Create Pond')
+        return render_template('ponds/create.html', form=form, title='Create Pond', total_fish_count=total_fish_count)
+
 
 @app.route('/ponds/<int:pond_id>/edit', methods=['GET', 'POST'])
 def edit_pond(pond_id):
@@ -104,9 +113,11 @@ def edit_pond(pond_id):
         pond.name = form.name.data
         pond.size = form.size.data
         pond.water_capacity = form.water_capacity.data
+        pond.fish_count = int(request.form.get('fish_count', 0))
         pond.pond_type = form.pond_type.data
         pond.location = form.location.data
         pond.notes = form.notes.data
+        pond.status = form.status.data  # Add this line to update the status
         db.session.commit()
         flash('Pond updated successfully!', 'success')
         return redirect(url_for('ponds'))
@@ -123,6 +134,7 @@ def view_pond(pond_id):
     
     return render_template('ponds/view.html', 
                           pond=pond, 
+
                           feeds=feeds, 
                           tasks=tasks, 
                           mortalities=mortalities, 
@@ -137,7 +149,7 @@ def delete_pond(pond_id):
     return redirect(url_for('ponds'))
 
 # Feed Management Routes
-from sqlalchemy import case
+
 @app.route('/feed')
 def feed():
     # Get all feeds
@@ -253,9 +265,10 @@ def complete_task(task_id):
     return redirect(url_for('tasks'))
 
 # Mortality Management Routes
+
 @app.route('/mortality')
 def mortality():
-    mortalities = Mortality.query.order_by(Mortality.date.desc()).all()
+    mortalities = Mortality.query.options(joinedload(Mortality.pond)).order_by(Mortality.date.desc()).all()
     return render_template('mortality/index.html', mortalities=mortalities)
 
 @app.route('/mortality/create', methods=['GET', 'POST'])
@@ -321,6 +334,7 @@ def create_feed_stock():
         db.session.commit()
         flash('Feed stock added successfully!', 'success')
         return redirect(url_for('stock'))
+
     return render_template('stock/create.html', form=form, title='Add Feed Stock', feed_stock=True, )
 
 # Financial Management Routes

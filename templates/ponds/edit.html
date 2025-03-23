@@ -27,6 +27,26 @@
                         {% endif %}
                     </div>
                     
+                    <div class="mb-3">
+                        <label for="fish_count" class="form-label">Fish Count</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-fish"></i></span>
+                            <input type="number" id="fish_count" name="fish_count" class="form-control" value="{{ pond.fish_count }}" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="fish_type" class="form-label">Fish Type</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-fish"></i></span>
+                            <select id="fish_type" name="fish_type" class="form-select" required>
+                                <option value="Tilapia" {% if pond.fish_type == 'Tilapia' %}selected{% endif %}>Tilapia</option>
+                                <option value="Catfish" {% if pond.fish_type == 'Catfish' %}selected{% endif %}>Catfish</option>
+                                <option value="Other" {% if pond.fish_type == 'Other' %}selected{% endif %}>Other</option>
+                            </select>
+                        </div>
+                    </div>
+
                     <div class="row mb-3">
                         <div class="col-md-4">
                             <label for="size" class="form-label">Size (m²)</label>
